@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#fff8f0">
 <title>SmartPaw — Dashboard</title>
@@ -245,6 +246,27 @@
   color: #7c3a10;
 }
 
+/* ── PORTION PILLS ── */
+.portion-pill {
+  flex: 1;
+  padding: 9px 4px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: white;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brown-light);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.portion-pill.active {
+  background: linear-gradient(135deg, #fff3e6, #ffddb8);
+  border-color: var(--orange-light);
+  color: var(--orange);
+}
+.portion-pill:hover:not(.active) { background: var(--warm1); }
+
 /* ── FEED BUTTON ── */
 .feed-btn-wrap { margin-bottom: 14px; }
 .feed-btn {
@@ -422,10 +444,17 @@
 
     <!-- Feed Button -->
     <div class="feed-btn-wrap">
+      <!-- Portion Picker -->
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="portion-pill" onclick="setPortion(this,30)">30g</button>
+        <button class="portion-pill active" onclick="setPortion(this,50)">50g</button>
+        <button class="portion-pill" onclick="setPortion(this,80)">80g</button>
+        <button class="portion-pill" onclick="setPortion(this,100)">100g</button>
+      </div>
       <button class="feed-btn" id="feedBtn" onclick="manualFeed()">
         <div class="shine"></div>
         <span class="feed-btn-icon">🥣</span>
-        Feed Now!
+        <span id="feedBtnLabel">Feed Now! · 50g</span>
       </button>
     </div>
 
@@ -477,6 +506,14 @@ const POLL_MS = 15000;
 let pollTimer = null;
 let pollCountdown = null;
 let secondsLeft = POLL_MS / 1000;
+let selectedPortion = 50;
+
+function setPortion(btn, grams) {
+  selectedPortion = grams;
+  document.querySelectorAll('.portion-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('feedBtnLabel').textContent = `Feed Now! · ${grams}g`;
+}
 
 function init() {
   updateClock();
@@ -590,36 +627,70 @@ async function manualFeed() {
   btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">⏳</span> Sending…`;
   try {
     await aioPost(cfg.dispenseFeed, 1);
-    addLog('Manual Feed 🥣', '50g', 'manual');
+    addLog('Manual Feed 🥣', selectedPortion + 'g', 'manual');
     countMealsToday();
     renderLastFeed();
     btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">✅</span> Sent!`;
-    showToast('🥣 Food dispensed!', 'ok');
+    showToast(`🥣 ${selectedPortion}g dispensed!`, 'ok');
     setTimeout(() => {
       btn.disabled = false;
-      btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">🥣</span> Feed Now!`;
+      btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">🥣</span><span id="feedBtnLabel">Feed Now! · ${selectedPortion}g</span>`;
     }, 2500);
   } catch(e) {
     showToast('❌ Failed: ' + e.message, 'err');
     btn.disabled = false;
-    btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">🥣</span> Feed Now!`;
+    btn.innerHTML = `<div class="shine"></div><span class="feed-btn-icon">🥣</span><span id="feedBtnLabel">Feed Now! · ${selectedPortion}g</span>`;
   }
 }
 
-// Camera stream
+// Camera stream with retry
+let camRetryTimer = null;
+let camRetryCount = 0;
+const CAM_MAX_RETRIES = 5;
+
 function initCamera() {
   const url = cfg.camUrl;
   if (!url) return;
+  loadCamFrame(url);
+}
+
+function loadCamFrame(url) {
   const img = document.getElementById('camFeed');
-  img.src = url;
+  const placeholder = document.getElementById('camPlaceholder');
+  const badge = document.getElementById('camBadge');
+  const badgeText = document.getElementById('camBadgeText');
+
+  // Bust cache so the stream reloads fresh on retry
+  img.src = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+
   img.onload = () => {
     img.classList.add('active');
-    document.getElementById('camPlaceholder').style.display = 'none';
-    document.getElementById('camBadge').classList.add('live');
-    document.getElementById('camBadgeText').textContent = 'LIVE';
+    placeholder.style.display = 'none';
+    badge.classList.add('live');
+    badgeText.textContent = 'LIVE';
+    camRetryCount = 0; // reset on success
+    if (camRetryTimer) { clearTimeout(camRetryTimer); camRetryTimer = null; }
   };
+
   img.onerror = () => {
-    document.getElementById('camBadgeText').textContent = 'NO SIGNAL';
+    img.classList.remove('active');
+    placeholder.style.display = 'flex';
+    badge.classList.remove('live');
+
+    if (camRetryCount < CAM_MAX_RETRIES) {
+      camRetryCount++;
+      const wait = Math.min(5000 * camRetryCount, 30000); // back-off up to 30s
+      badgeText.textContent = `RETRY ${camRetryCount}/${CAM_MAX_RETRIES}`;
+      placeholder.innerHTML = `
+        <div class="cam-placeholder-icon">📡</div>
+        <div class="cam-placeholder-text">Reconnecting… (${camRetryCount}/${CAM_MAX_RETRIES})</div>`;
+      camRetryTimer = setTimeout(() => loadCamFrame(url), wait);
+    } else {
+      badgeText.textContent = 'NO SIGNAL';
+      placeholder.innerHTML = `
+        <div class="cam-placeholder-icon">📷</div>
+        <div class="cam-placeholder-text">Camera offline</div>`;
+    }
   };
 }
 
