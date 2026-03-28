@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fff8f0">
+<title>SmartPaw — Schedule</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+
+/* ── NEXT FEED HERO ── */
+.next-feed-card {
+  background: linear-gradient(135deg, #ff8c42, #f97316);
+  border-radius: 24px;
+  padding: 22px 20px;
+  margin-bottom: 18px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(249,115,22,0.35);
+}
+.next-feed-card::before {
+  content: '⏰';
+  position: absolute;
+  right: -10px; bottom: -16px;
+  font-size: 100px;
+  opacity: 0.15;
+  line-height: 1;
+}
+.next-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  margin-bottom: 6px;
+}
+.next-time {
+  font-family: var(--display);
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+}
+.next-sub {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+.next-countdown {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+/* ── SCHEDULE ITEMS ── */
+.sched-list { margin-bottom: 18px; }
+
+.sched-item {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.2s;
+  animation: fadeSlideUp 0.25s ease;
+}
+.sched-item.inactive { opacity: 0.55; }
+
+.sched-time-block { flex: 1; }
+.sched-time-big {
+  font-family: var(--display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--brown-dark);
+  line-height: 1;
+}
+.sched-time-ampm {
+  font-size: 14px;
+  color: var(--brown-light);
+  font-weight: 600;
+  margin-left: 3px;
+}
+.sched-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+.sched-portion-badge {
+  font-size: 11px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff3e6, #ffe0b8);
+  color: var(--orange);
+  border: 1px solid #ffd4a8;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+.sched-next-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+
+/* Toggle */
+.toggle {
+  position: relative;
+  width: 48px; height: 26px;
+  flex-shrink: 0;
+}
+.toggle input { display: none; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: #e5e7eb;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: var(--green); }
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 20px; height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.toggle input:checked + .toggle-track::after { left: 25px; }
+
+/* Delete btn */
+.del-btn {
+  background: #fff5f5;
+  border: 2px solid #fecaca;
+  border-radius: 12px;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.del-btn:hover { background: #fee2e2; border-color: #fca5a5; }
+
+/* ── ADD FORM ── */
+.add-card {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(255,140,60,0.07);
+}
+.add-card-title {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--brown-dark);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.time-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* ── SUMMARY BANNER ── */
+.summary-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--warm1);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brown-mid);
+}
+.summary-icon { font-size: 20px; }
+
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🐾 SmartPaw</span>
+    </div>
+    <div class="conn-pill" id="connPill">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connLabel">Offline</span>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <div class="page-title">Schedule ⏰</div>
+      <div class="page-subtitle">Set automatic daily feeding times</div>
+    </div>
+
+    <!-- Next Feed Hero -->
+    <div class="next-feed-card" id="nextCard" style="display:none">
+      <div class="next-label">Next Scheduled Feeding</div>
+      <div class="next-time" id="nextTime">--:-- --</div>
+      <div class="next-sub" id="nextSub">—</div>
+      <div class="next-countdown" id="nextCountdown">⏱ Calculating…</div>
+    </div>
+
+    <!-- Summary Banner -->
+    <div class="summary-banner" id="summaryBanner">
+      <span class="summary-icon">😴</span>
+      <span id="summaryText">No schedules yet. Add one below!</span>
+    </div>
+
+    <!-- Schedule List -->
+    <div class="sched-list" id="schedList"></div>
+
+    <!-- Add Form -->
+    <div class="add-card">
+      <div class="add-card-title">➕ Add Schedule</div>
+      <div class="time-input-row">
+        <div class="form-group" style="flex:1;margin:0">
+          <label class="form-label">Time</label>
+          <input type="time" class="form-input" id="newTime" value="08:00">
+        </div>
+        <div class="form-group" style="flex:1;margin:0">
+          <label class="form-label">Portion</label>
+          <select class="form-input" id="newPortion">
+            <option value="30">30g — Small</option>
+            <option value="50" selected>50g — Medium</option>
+            <option value="80">80g — Large</option>
+            <option value="100">100g — XL</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="addSchedule()">🐾 Add Feeding Time</button>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+    <a href="log.html" class="nav-item"><span class="nav-icon">📋</span><span>Log</span></a>
+    <a href="schedule.html" class="nav-item active"><span class="nav-icon">⏰</span><span>Schedule</span></a>
+    <a href="config.html" class="nav-item"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script>
+
+function init() {
+  renderList();
+  updateNext();
+  setInterval(updateNext, 30000);
+}
+
+function formatDisplay(time24) {
+  const [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return { time: `${h12}:${String(m).padStart(2,'0')}`, ampm };
+}
+
+function updateNext() {
+  const active = schedules.filter(s => s.active);
+  const banner = document.getElementById('summaryBanner');
+  const summText = document.getElementById('summaryText');
+  const nextCard = document.getElementById('nextCard');
+
+  if (active.length === 0) {
+    banner.style.display = 'flex';
+    summText.textContent = 'No active schedules. Add one below!';
+    document.getElementById('summaryIcon')?.textContent;
+    nextCard.style.display = 'none';
+    return;
+  }
+
+  banner.style.display = 'flex';
+  document.querySelector('.summary-icon').textContent = '✅';
+  summText.textContent = `${active.length} active schedule${active.length > 1 ? 's' : ''} · Runs daily`;
+
+  // Find next
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const withMins = active.map(s => {
+    const [h, m] = s.time.split(':').map(Number);
+    const mins = h * 60 + m;
+    return { ...s, mins, diffMins: mins >= nowMins ? mins - nowMins : 1440 - nowMins + mins };
+  });
+  withMins.sort((a, b) => a.diffMins - b.diffMins);
+  const next = withMins[0];
+  const fmt = formatDisplay(next.time);
+
+  nextCard.style.display = 'block';
+  document.getElementById('nextTime').innerHTML = `${fmt.time} <span style="font-size:20px;opacity:0.7">${fmt.ampm}</span>`;
+  document.getElementById('nextSub').textContent = `${next.portion}g portion`;
+
+  const h = Math.floor(next.diffMins / 60), m = next.diffMins % 60;
+  const diff = next.diffMins < 60 ? `${m}m` : `${h}h ${m}m`;
+  document.getElementById('nextCountdown').textContent = `⏱ In ${diff}`;
+}
+
+function renderList() {
+  const list = document.getElementById('schedList');
+  if (schedules.length === 0) { list.innerHTML = ''; return; }
+
+  const sorted = [...schedules].sort((a,b) => a.time.localeCompare(b.time));
+  const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+  const nextActive = sorted.filter(s => s.active).sort((a,b) => {
+    const am = parseInt(a.time.replace(':',''));
+    const bm = parseInt(b.time.replace(':',''));
+    return am - bm;
+  }).find(s => {
+    const [h,m] = s.time.split(':').map(Number);
+    return h * 60 + m >= nowMins;
+  });
+
+  list.innerHTML = sorted.map(s => {
+    const fmt = formatDisplay(s.time);
+    const isNext = nextActive && nextActive.id === s.id;
+    return `
+      <div class="sched-item ${s.active ? '' : 'inactive'}" id="si-${s.id}">
+        <div class="sched-time-block">
+          <div class="sched-time-big">${fmt.time}<span class="sched-time-ampm">${fmt.ampm}</span></div>
+          <div class="sched-meta">
+            <span class="sched-portion-badge">🍽 ${s.portion}g</span>
+            ${isNext ? '<span class="sched-next-badge">Next up</span>' : ''}
+          </div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleSched(${s.id})">
+          <div class="toggle-track"></div>
+        </label>
+        <button class="del-btn" onclick="deleteSched(${s.id})">🗑️</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function addSchedule() {
+  const time = document.getElementById('newTime').value;
+  const portion = parseInt(document.getElementById('newPortion').value);
+  if (!time) { showToast('Please pick a time!', 'warn'); return; }
+  if (schedules.find(s => s.time === time)) { showToast('That time already exists!', 'warn'); return; }
+
+  schedules.push({ id: Date.now(), time, portion, active: true });
+  schedules.sort((a,b) => a.time.localeCompare(b.time));
+  saveSchedules();
+  renderList();
+  updateNext();
+  showToast('⏰ Schedule added!', 'ok');
+}
+
+function toggleSched(id) {
+  const s = schedules.find(x => x.id === id);
+  if (s) { s.active = !s.active; saveSchedules(); renderList(); updateNext(); }
+}
+
+function deleteSched(id) {
+  schedules = schedules.filter(x => x.id !== id);
+  saveSchedules();
+  renderList();
+  updateNext();
+  showToast('🗑️ Removed', 'ok');
+}
+
+init();
+</script>
+</body>
+</html>

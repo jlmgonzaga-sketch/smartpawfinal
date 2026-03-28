@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fff8f0">
+<title>SmartPaw — Activity Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+
+/* ── FILTER PILLS ── */
+.filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+.filter-pill {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: white;
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brown-light);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.filter-pill.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+}
+
+/* ── STATS STRIP ── */
+.log-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.log-stat {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 10px;
+  text-align: center;
+}
+.log-stat-num {
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--brown-dark);
+  line-height: 1;
+}
+.log-stat-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--brown-light);
+  margin-top: 3px;
+}
+
+/* ── DATE GROUPS ── */
+.date-group { margin-bottom: 18px; }
+.date-label {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brown-light);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.date-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+/* ── LOG ITEMS ── */
+.log-item {
+  background: white;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: fadeSlideUp 0.25s ease;
+  transition: transform 0.15s;
+}
+.log-item:active { transform: scale(0.99); }
+
+.log-icon-wrap {
+  width: 48px; height: 48px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.log-icon-wrap.manual  { background: linear-gradient(135deg, #fff3e6, #ffddb8); }
+.log-icon-wrap.schedule { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+.log-icon-wrap.detected { background: linear-gradient(135deg, #f0fdf4, #bbf7d0); }
+
+.log-body { flex: 1; min-width: 0; }
+.log-title {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brown-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.log-time {
+  font-size: 11px;
+  color: var(--brown-light);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.log-right { text-align: right; flex-shrink: 0; }
+.log-amount {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--orange);
+}
+.log-type-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.log-type-tag.manual  { background: #fff3e6; color: var(--orange); }
+.log-type-tag.schedule { background: #eff6ff; color: #3b82f6; }
+.log-type-tag.detected { background: #f0fdf4; color: #16a34a; }
+
+/* ── CLEAR BTN ── */
+.clear-btn {
+  background: none;
+  border: none;
+  font-family: var(--body);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.clear-btn:hover { background: #fff5f5; }
+
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🐾 SmartPaw</span>
+    </div>
+    <div class="conn-pill" id="connPill">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connLabel">Offline</span>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header" style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div class="page-title">Activity Log 📋</div>
+        <div class="page-subtitle">Every meal your pet has had</div>
+      </div>
+      <button class="clear-btn" onclick="confirmClear()">Clear all</button>
+    </div>
+
+    <!-- Stats Strip -->
+    <div class="log-stats">
+      <div class="log-stat">
+        <div class="log-stat-num" id="statTotal">0</div>
+        <div class="log-stat-label">Total</div>
+      </div>
+      <div class="log-stat">
+        <div class="log-stat-num" id="statToday">0</div>
+        <div class="log-stat-label">Today</div>
+      </div>
+      <div class="log-stat">
+        <div class="log-stat-num" id="statGrams">0g</div>
+        <div class="log-stat-label">This week</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <button class="filter-pill active" onclick="setFilter('all', this)">All 🐾</button>
+      <button class="filter-pill" onclick="setFilter('manual', this)">Manual 🥣</button>
+      <button class="filter-pill" onclick="setFilter('schedule', this)">Scheduled ⏰</button>
+    </div>
+
+    <!-- Log List -->
+    <div id="logContainer"></div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item">
+      <span class="nav-icon">🏠</span><span>Home</span>
+    </a>
+    <a href="log.html" class="nav-item active">
+      <span class="nav-icon">📋</span><span>Log</span>
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <span class="nav-icon">⏰</span><span>Schedule</span>
+    </a>
+    <a href="config.html" class="nav-item">
+      <span class="nav-icon">⚙️</span><span>Settings</span>
+    </a>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script>
+let activeFilter = 'all';
+
+const typeIcons = { manual: '🥣', schedule: '⏰', detected: '🐾' };
+const typeLabels = { manual: 'Manual', schedule: 'Scheduled', detected: 'Pet Seen' };
+
+function init() {
+  renderStats();
+  renderLog();
+}
+
+function renderStats() {
+  const today = new Date().toDateString();
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  document.getElementById('statTotal').textContent = log.length;
+  document.getElementById('statToday').textContent = log.filter(e => new Date(e.time).toDateString() === today).length;
+  const weeklyGrams = log
+    .filter(e => new Date(e.time) > weekAgo)
+    .reduce((sum, e) => sum + (parseInt(e.amount) || 0), 0);
+  document.getElementById('statGrams').textContent = weeklyGrams + 'g';
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  renderLog();
+}
+
+function renderLog() {
+  const container = document.getElementById('logContainer');
+  const filtered = activeFilter === 'all' ? log : log.filter(e => e.type === activeFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state animate-in">
+        <div class="empty-icon">🍽️</div>
+        <div class="empty-text">No entries yet</div>
+        <div class="empty-sub">Feed your pet to start logging!</div>
+      </div>`;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  filtered.forEach(e => {
+    const d = new Date(e.time);
+    const key = d.toDateString();
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const label = key === today ? 'Today' : key === yesterday ? 'Yesterday' : d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', weekday: 'short' });
+    if (!groups[label]) groups[label] = [];
+    groups[label].push(e);
+  });
+
+  container.innerHTML = Object.entries(groups).map(([date, entries]) => `
+    <div class="date-group animate-in">
+      <div class="date-label">${date}</div>
+      ${entries.map(e => `
+        <div class="log-item">
+          <div class="log-icon-wrap ${e.type}">${typeIcons[e.type] || '🐾'}</div>
+          <div class="log-body">
+            <div class="log-title">${e.title}</div>
+            <div class="log-time">${e.displayTime}</div>
+          </div>
+          <div class="log-right">
+            <div class="log-amount">${e.amount}</div>
+            <div class="log-type-tag ${e.type}">${typeLabels[e.type] || e.type}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function confirmClear() {
+  if (log.length === 0) { showToast('Log is already empty!', 'warn'); return; }
+  if (!confirm('Delete all ' + log.length + ' log entries?')) return;
+  log = [];
+  saveLog();
+  renderStats();
+  renderLog();
+  showToast('🗑️ Log cleared', 'ok');
+}
+
+init();
+</script>
+</body>
+</html>

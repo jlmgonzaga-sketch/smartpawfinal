@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#fff8f0">
+<title>SmartPaw — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared.css">
+<style>
+
+/* ── CONNECTION STATUS CARD ── */
+.conn-status-card {
+  border-radius: 22px;
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: all 0.3s;
+}
+.conn-status-card.connected {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #86efac;
+}
+.conn-status-card.disconnected {
+  background: linear-gradient(135deg, #fff8f0, #fff3e6);
+  border: 2px solid var(--border);
+}
+.conn-status-icon { font-size: 36px; }
+.conn-status-text {}
+.conn-status-title {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+}
+.conn-status-card.connected .conn-status-title { color: #16a34a; }
+.conn-status-card.disconnected .conn-status-title { color: var(--brown-mid); }
+.conn-status-sub { font-size: 12px; color: var(--brown-light); margin-top: 2px; font-weight: 600; }
+
+/* ── SECTION DIVIDER ── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 14px;
+}
+.section-divider-title {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brown-mid);
+  white-space: nowrap;
+}
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 1px;
+}
+
+/* ── FEED NAME ROW ── */
+.feed-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.feed-emoji {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 36px;
+  text-align: center;
+}
+.feed-row .form-group { flex: 1; margin: 0; }
+
+/* ── SETTINGS ROWS ── */
+.setting-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-icon { font-size: 22px; flex-shrink: 0; }
+.setting-info { flex: 1; }
+.setting-label {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brown-dark);
+}
+.setting-sub { font-size: 11px; color: var(--brown-light); font-weight: 600; margin-top: 1px; }
+.setting-control { flex-shrink: 0; }
+
+/* Inline toggle */
+.toggle-sm {
+  position: relative;
+  width: 44px; height: 24px;
+}
+.toggle-sm input { display: none; }
+.toggle-sm-track {
+  position: absolute; inset: 0;
+  background: #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.toggle-sm input:checked + .toggle-sm-track { background: var(--green); }
+.toggle-sm-track::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle-sm input:checked + .toggle-sm-track::after { left: 23px; }
+
+/* Test button */
+.test-btn {
+  background: var(--warm1);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--orange);
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.test-btn:hover { background: var(--warm2); border-color: var(--orange-light); }
+.test-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── ABOUT ── */
+.about-card {
+  text-align: center;
+  padding: 20px;
+  background: var(--warm1);
+  border-radius: 20px;
+  margin-top: 6px;
+}
+.about-logo { font-size: 36px; margin-bottom: 6px; }
+.about-name {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--brown-dark);
+}
+.about-version { font-size: 12px; color: var(--brown-light); font-weight: 600; margin-top: 2px; }
+.about-desc { font-size: 12px; color: var(--brown-mid); margin-top: 8px; line-height: 1.5; }
+
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="logo">🐾 SmartPaw</span>
+    </div>
+    <div class="conn-pill" id="connPill">
+      <div class="conn-dot" id="connDot"></div>
+      <span id="connLabel">Offline</span>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <div class="page-header">
+      <div class="page-title">Settings ⚙️</div>
+      <div class="page-subtitle">Connect to your SmartPaw device</div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="conn-status-card disconnected" id="connStatusCard">
+      <div class="conn-status-icon" id="connStatusIcon">📡</div>
+      <div class="conn-status-text">
+        <div class="conn-status-title" id="connStatusTitle">Not Connected</div>
+        <div class="conn-status-sub" id="connStatusSub">Enter your Adafruit IO credentials below</div>
+      </div>
+    </div>
+
+    <!-- Adafruit IO Credentials -->
+    <div class="card">
+      <div class="card-label">☁️ Adafruit IO Account</div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-input" id="cfgUsername" placeholder="your-username" autocomplete="off" spellcheck="false">
+        <div class="form-hint">Your Adafruit IO login username</div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">API Key</label>
+        <input class="form-input" id="cfgApiKey" type="password" placeholder="aio_xxxxxxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+        <div class="form-hint">Found at io.adafruit.com → My Key (top right)</div>
+      </div>
+    </div>
+
+    <!-- Feed Names -->
+    <div class="card">
+      <div class="card-label">📡 Feed Names</div>
+      <div class="feed-row">
+        <div class="feed-emoji">🥣</div>
+        <div class="form-group">
+          <label class="form-label">Dispense Command</label>
+          <input class="form-input" id="cfgDispense" placeholder="dispense-command" spellcheck="false">
+        </div>
+      </div>
+      <div class="feed-row">
+        <div class="feed-emoji">🐾</div>
+        <div class="form-group">
+          <label class="form-label">Pet Detected</label>
+          <input class="form-input" id="cfgPet" placeholder="pet-detected" spellcheck="false">
+        </div>
+      </div>
+      <div class="feed-row" style="margin-bottom:0">
+        <div class="feed-emoji">🌾</div>
+        <div class="form-group">
+          <label class="form-label">Food Level</label>
+          <input class="form-input" id="cfgFood" placeholder="food-level" spellcheck="false">
+        </div>
+      </div>
+    </div>
+
+    <!-- Camera -->
+    <div class="card">
+      <div class="card-label">📷 ESP32-CAM</div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Camera Stream URL</label>
+        <input class="form-input" id="cfgCam" placeholder="http://192.168.x.x:81/stream" spellcheck="false">
+        <div class="form-hint">Your ESP32-CAM local IP address (Week 2 setup)</div>
+      </div>
+    </div>
+
+    <!-- Pet Profile -->
+    <div class="card">
+      <div class="card-label">🐶 Pet Profile</div>
+      <div class="form-group">
+        <label class="form-label">Pet Name</label>
+        <input class="form-input" id="cfgPetName" placeholder="e.g. Buddy" maxlength="20">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Pet Type</label>
+        <select class="form-input" id="cfgPetType">
+          <option value="dog">🐶 Dog</option>
+          <option value="cat">🐱 Cat</option>
+          <option value="rabbit">🐰 Rabbit</option>
+          <option value="other">🐾 Other</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Save -->
+    <button class="btn-primary" onclick="saveAll()" style="margin-bottom:12px">💾 Save & Connect</button>
+
+    <!-- Test Connection -->
+    <button class="test-btn" id="testBtn" onclick="testConnection()" style="width:100%;margin-bottom:18px">
+      🔌 Test Connection
+    </button>
+
+    <!-- Preferences -->
+    <div class="section-divider">
+      <span class="section-divider-title">Preferences</span>
+    </div>
+
+    <div class="card" style="padding:0 18px">
+      <div class="setting-row">
+        <span class="setting-icon">🔔</span>
+        <div class="setting-info">
+          <div class="setting-label">Feed Notifications</div>
+          <div class="setting-sub">Alert when a scheduled feed fires</div>
+        </div>
+        <div class="setting-control">
+          <label class="toggle-sm">
+            <input type="checkbox" id="prefNotif" onchange="savePref('notif', this.checked)">
+            <div class="toggle-sm-track"></div>
+          </label>
+        </div>
+      </div>
+      <div class="setting-row">
+        <span class="setting-icon">🔊</span>
+        <div class="setting-info">
+          <div class="setting-label">Sound Effects</div>
+          <div class="setting-sub">Play sound on feed dispense</div>
+        </div>
+        <div class="setting-control">
+          <label class="toggle-sm">
+            <input type="checkbox" id="prefSound" onchange="savePref('sound', this.checked)">
+            <div class="toggle-sm-track"></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div class="section-divider" style="margin-top:24px">
+      <span class="section-divider-title" style="color:var(--red)">Danger Zone</span>
+    </div>
+
+    <button class="btn-danger" onclick="clearData()" style="margin-bottom:10px">
+      🗑️ Clear All Data
+    </button>
+
+    <!-- About -->
+    <div class="about-card">
+      <div class="about-logo">🐾</div>
+      <div class="about-name">SmartPaw</div>
+      <div class="about-version">v1.0 · IoT Pet Feeder PWA</div>
+      <div class="about-desc">ESP32 · HC-SR04 · Servo MG996R<br>Powered by Adafruit IO</div>
+    </div>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><span class="nav-icon">🏠</span><span>Home</span></a>
+    <a href="log.html" class="nav-item"><span class="nav-icon">📋</span><span>Log</span></a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">⏰</span><span>Schedule</span></a>
+    <a href="config.html" class="nav-item active"><span class="nav-icon">⚙️</span><span>Settings</span></a>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script>
+function init() {
+  // Restore fields
+  document.getElementById('cfgUsername').value = cfg.username || '';
+  document.getElementById('cfgApiKey').value = cfg.apiKey || '';
+  document.getElementById('cfgDispense').value = cfg.dispenseFeed || 'dispense-command';
+  document.getElementById('cfgPet').value = cfg.petFeed || 'pet-detected';
+  document.getElementById('cfgFood').value = cfg.foodFeed || 'food-level';
+  document.getElementById('cfgCam').value = cfg.camUrl || '';
+  document.getElementById('cfgPetName').value = cfg.petName || '';
+  document.getElementById('cfgPetType').value = cfg.petType || 'dog';
+  document.getElementById('prefNotif').checked = cfg.prefNotif || false;
+  document.getElementById('prefSound').checked = cfg.prefSound || false;
+
+  updateConnCard(cfg.username && cfg.apiKey);
+}
+
+function updateConnCard(connected) {
+  const card = document.getElementById('connStatusCard');
+  const icon = document.getElementById('connStatusIcon');
+  const title = document.getElementById('connStatusTitle');
+  const sub = document.getElementById('connStatusSub');
+  const dot = document.getElementById('connDot');
+  const label = document.getElementById('connLabel');
+
+  if (connected) {
+    card.className = 'conn-status-card connected';
+    icon.textContent = '✅';
+    title.textContent = 'Connected';
+    sub.textContent = `Signed in as ${cfg.username}`;
+    dot.classList.add('online');
+    label.textContent = 'Live';
+  } else {
+    card.className = 'conn-status-card disconnected';
+    icon.textContent = '📡';
+    title.textContent = 'Not Connected';
+    sub.textContent = 'Enter credentials below';
+    dot.classList.remove('online');
+    label.textContent = 'Offline';
+  }
+}
+
+function saveAll() {
+  const username = document.getElementById('cfgUsername').value.trim();
+  const apiKey = document.getElementById('cfgApiKey').value.trim();
+  if (!username || !apiKey) {
+    showToast('⚠️ Username & API key required!', 'warn');
+    return;
+  }
+  cfg = {
+    ...cfg,
+    username,
+    apiKey,
+    dispenseFeed: document.getElementById('cfgDispense').value.trim() || 'dispense-command',
+    petFeed: document.getElementById('cfgPet').value.trim() || 'pet-detected',
+    foodFeed: document.getElementById('cfgFood').value.trim() || 'food-level',
+    camUrl: document.getElementById('cfgCam').value.trim(),
+    petName: document.getElementById('cfgPetName').value.trim(),
+    petType: document.getElementById('cfgPetType').value,
+  };
+  saveCfg();
+  updateConnCard(true);
+  showToast('✅ Saved & connected!', 'ok');
+}
+
+async function testConnection() {
+  const btn = document.getElementById('testBtn');
+  if (!cfg.username || !cfg.apiKey) {
+    showToast('⚠️ Save your credentials first!', 'warn');
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = '⏳ Testing…';
+  try {
+    const r = await fetch(`https://io.adafruit.com/api/v2/${cfg.username}/feeds`, {
+      headers: { 'X-AIO-Key': cfg.apiKey }
+    });
+    if (r.ok) {
+      const feeds = await r.json();
+      btn.textContent = '🔌 Test Connection';
+      btn.disabled = false;
+      showToast(`✅ Connected! ${feeds.length} feeds found.`, 'ok');
+      updateConnCard(true);
+    } else {
+      throw new Error('HTTP ' + r.status);
+    }
+  } catch(e) {
+    btn.textContent = '🔌 Test Connection';
+    btn.disabled = false;
+    showToast('❌ Failed: ' + e.message, 'err');
+    updateConnCard(false);
+  }
+}
+
+function savePref(key, val) {
+  cfg['pref' + key.charAt(0).toUpperCase() + key.slice(1)] = val;
+  saveCfg();
+}
+
+function clearData() {
+  if (!confirm('Delete all logs, schedules, and settings? This cannot be undone.')) return;
+  localStorage.clear();
+  sessionStorage.clear();
+  location.reload();
+}
+
+init();
+</script>
+</body>
+</html>
